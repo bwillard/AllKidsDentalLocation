@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+	<head>
+        <title>Office Location Finder</title>
+         <style type="text/css">
+            html, body { height: 100%; margin: 0; padding: 0; }
+            .content {max-width: 600px; align-content:center; margin: 0 auto}
+            .mainDisplay {
+                width: 600px;
+            }
+
+            h1 {text-align: center}
+            #map {
+                 display: table-cell;
+                 width: 400px;
+                 height: 400px;
+            }
+            #officeList {
+                display: table-cell;
+                width: 200px;
+                height: 400px;
+            }
+             .mainDisplay {
+                 padding-top: 5px;
+                 display: table;
+                 height: 80%;
+             }
+             .finderContnet {
+                 height: 100%;
+                 display: table-row;
+             }
+             .address {
+                 margin-left: 10px;
+             }
+             .phone {
+                 margin-left: 10px;
+             }
+             .directions {
+                 margin-left: 10px;
+             }
+             .officeDetails {
+                margin-top: 7px;
+             }
+        </style>
+	</head>
+	<body>
+        <div class="content">
+            <h1>Office Location Finder</h1>
+            <br />
+            <div>
+                Show offices near
+                <input type="text" id="address" placeholder="zip or address" onkeydown="if (event.keyCode == 13) findOffices()"/>
+                <button onclick="findOffices()">Search</button>
+            </div>
+            <div class="mainDisplay">
+                <div class="finderContnet">
+                    <div id="officeList"></div>
+                    <div id="map"></div>
+                </div>
+            </div>
+        </div>
+		<script type="text/javascript">
+		    var globalMap;
+		    var geocoder;
+		    var globalLocation;
+		    var offices = [
+                new office("Melrose Park", "http://www.allkidsdentalcenter.com/location-melrose/", "1812 Broadway, Melrose Park, IL 60160", 41.90667, -87.8574749, "708-498-4410"),
+                new office("Grayslake", "http://www.allkidsdentalcenter.com/location-grayslake/", "719 Barron Blvd. Grayslake IL 60030", 42.35595, -88.032816, "847-986-6724"),
+                new office("Elgin", "http://www.allkidsdentalcenter.com/location-elgin/", "2050 Larkin Ave. Ste. 100 Elgin IL 60123", 42.0328696, -88.3278342, "847-695-1693"),
+                new office("Crystal Lake", "http://www.allkidsdentalcenter.com/location-crystal-lake/", "278 Memorial Drive Crystal Lake, IL 60014", 42.2320345, -88.3104893, "815-455-3110"),
+                new office("Rockford", "http://www.allkidsdentalcenter.com/location-rockford/", "555 N. Court St. Ste. 100 Rockford IL 61103", 42.2765602, -89.0928387, "815-733-2550"),
+		    ];
+
+		    function initMap() {
+		        var officeBounds = new google.maps.LatLngBounds();
+		        offices.forEach(function (office) {
+		            officeBounds.extend(new google.maps.LatLng(office.lat, office.long));
+		        });
+		        globalMap = new google.maps.Map(document.getElementById('map'), {
+		            center: { lat: 0, lng: 0 },
+		            zoom: 20
+		        });
+		        globalMap.fitBounds(officeBounds);
+		        geocoder = new google.maps.Geocoder();
+
+		        var infoWindow = new google.maps.InfoWindow({});
+
+		        for (var index in offices) {
+		            offices[index].addMarkerToMap(globalMap, infoWindow);
+		        }
+
+		        if (navigator.geolocation) {
+		            navigator.geolocation.getCurrentPosition(showPosition, showLocationError);
+		        }
+		    }
+
+		    function findOffices() {
+		        var location = document.getElementById('address').value;
+		        if (!location) {
+		            alert("Please enter a zip code or address first");
+		            return;
+		        }
+
+		        geocoder.geocode({ 'address': location }, function (results, status) {
+		            if (status === google.maps.GeocoderStatus.OK) {
+		                updateLocation(results[0].geometry.location);
+		            } else {
+		                alert('Geocode was not successful for the following reason: ' + status);
+		            }
+		        });
+		    }
+
+		    function updateLocation(location) {
+		        globalMap.setCenter(location);
+		        globalMap.setZoom(11);
+		        globalLocation = location;
+
+		        var service = new google.maps.DistanceMatrixService;
+		        var destinations = offices.map(function(office) {
+		            return { lat: office.lat, lng: office.long };
+		        });
+
+		        service.getDistanceMatrix({
+		            origins: [location],
+		            destinations: destinations,
+		            travelMode: google.maps.TravelMode.DRIVING,
+		            unitSystem: google.maps.UnitSystem.IMPERIAL,
+		            avoidHighways: false,
+		            avoidTolls: false
+		        }, function (response, status) {
+		            if (status !== google.maps.DistanceMatrixStatus.OK) {
+		                alert('Error was: ' + status);
+		            } else {
+		                var row = response.rows.pop();
+		                for (var i = 0; i < offices.length; i++) {
+		                    row.elements[i].office = offices[i];
+		                }
+		                var sorted = row.elements.sort(function (e1, e2) {
+		                    return e1.distance.value - e2.distance.value;
+		                });
+		                updateLocationUi(sorted, location);
+		            }
+		        });
+		    }
+
+		    function updateLocationUi(sortedDestinations, location) {
+		        var listDom = document.getElementById("officeList");
+		        listDom.innerHTML = "";
+		        sortedDestinations.forEach(function (destination) {
+		            var officesDisplay = "<div class='officeDetails'> " +
+                        "<div class='name'><a href='" + destination.office.link + "'>" + destination.office.title + "</a></div>" +
+                        "<div class='address'>" + destination.office.address + "</div>" +
+                        "<div class='phone'><a href='tel:" + destination.office.phone + "'>" + destination.office.phone + "</a></div>" +
+                        "<div class='directions'><a href='https://maps.google.com?saddr=" + location + "&daddr=" + destination.office.address + "'>Directions</a> ("+ destination.distance.text + ")</div>" +
+                        "</div><br/>";
+		            listDom.innerHTML += officesDisplay;
+		        }, this);
+
+		        var bounds = new google.maps.LatLngBounds();
+		        bounds.extend(location);
+		        var closestOffice = sortedDestinations[0].office;
+		        bounds.extend(new google.maps.LatLng(closestOffice.lat, closestOffice.long));
+		        globalMap.fitBounds(bounds);
+		    }
+
+		    function office(title, link, address, lat, long, phone) {
+		        this.title = title;
+		        this.link = link;
+		        this.address = address;
+		        this.lat = lat;
+		        this.long = long;
+		        this.phone = phone;
+		    }
+
+		    office.prototype.addMarkerToMap = function (map, infoWindow) {
+		        this.marker = new google.maps.Marker({
+		            position: new google.maps.LatLng(this.lat, this.long),
+		            map: map,
+		            title: this.address
+		        });
+
+		        
+		        var theOffice = this;
+		        this.marker.addListener('click', function () {
+		            infoWindow.setContent("<div class='infowindow'><a class='infoBoxTitle' href='" + theOffice.link + "'>" + theOffice.title + "</a><br/></br>" + theOffice.address + "<br/> <a href='tel:" + theOffice.phone + "'>" + theOffice.phone + "</div>");
+		            infoWindow.open(map, theOffice.marker);
+		        });
+		    }
+
+		    function showPosition(position) {
+		        updateLocation(new google.maps.LatLng(position.coords.latitude, position.coords.longitude))
+		    }
+
+		    function showLocationError(error) {
+		        if (window.console) {
+		            window.console.log("Couldn't get current location: " + error);
+		        }
+		    }
+		</script>
+        <script async defer
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA7SYRt2IBHNkYyRLY9HAElfUWbYUE0UTQ&callback=initMap">
+        </script>
+	</body>
+</html>
