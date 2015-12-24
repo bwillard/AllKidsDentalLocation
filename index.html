@@ -151,7 +151,7 @@
                         "<div class='name'><a href='" + destination.office.link + "'>" + destination.office.title + "</a></div>" +
                         "<div class='address'>" + destination.office.address + "</div>" +
                         "<div class='phone'><a href='tel:" + destination.office.phone + "'>" + destination.office.phone + "</a></div>" +
-                        "<div class='directions'><a href='https://maps.google.com?saddr=" + location + "&daddr=" + destination.office.address + "'>Directions</a> ("+ destination.distance.text + ")</div>" +
+                        "<div class='directions'><a href='https://maps.google.com?saddr=" + location + "&daddr=" + destination.office.address + "' target='_blank'>Directions</a> ("+ destination.distance.text + ")</div>" +
                         "</div><br/>";
 		            listDom.innerHTML += officesDisplay;
 		        }, this);
