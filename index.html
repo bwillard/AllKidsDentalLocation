@@ -11,23 +11,23 @@
 
             h1 {text-align: center}
             #map {
-                 display: table-cell;
-                 width: 400px;
-                 height: 400px;
+                float:left;
+                width: 340px;
+                height: 400px;
             }
             #officeList {
-                display: table-cell;
-                width: 200px;
+                float:left;
+                width: 250px;
                 height: 400px;
+                margin-right: 10px;
+                overflow: auto;
             }
              .mainDisplay {
                  padding-top: 5px;
-                 display: table;
-                 height: 80%;
+                 height: 500px;
              }
              .finderContnet {
                  height: 100%;
-                 display: table-row;
              }
              .address {
                  margin-left: 10px;
@@ -36,6 +36,9 @@
                  margin-left: 10px;
              }
              .directions {
+                 margin-left: 10px;
+             }
+             .distAndTime {
                  margin-left: 10px;
              }
              .officeDetails {
@@ -69,6 +72,10 @@
                 new office("Elgin", "http://www.allkidsdentalcenter.com/location-elgin/", "2050 Larkin Ave. Ste. 100 Elgin IL 60123", 42.0328696, -88.3278342, "847-695-1693"),
                 new office("Crystal Lake", "http://www.allkidsdentalcenter.com/location-crystal-lake/", "278 Memorial Drive Crystal Lake, IL 60014", 42.2320345, -88.3104893, "815-455-3110"),
                 new office("Rockford", "http://www.allkidsdentalcenter.com/location-rockford/", "555 N. Court St. Ste. 100 Rockford IL 61103", 42.2765602, -89.0928387, "815-733-2550"),
+                new office("Chicago/Pulaski", "http://www.allkidsdentalcenter.com/", "5160 S Pulaski Ste. 102 Chicago, IL 60632", 41.799229, -87.724030, "773-423-2810"),
+                new office("Chicago/Fullerton", "http://www.allkidsdentalcenter.com/", "5708 W Fullerton Ave Chicago, IL 60639", 41.923995, -87.768828, "773-596-5960"),
+                new office("Chicago/Cicero", "http://www.allkidsdentalcenter.com/", "8541 S Cicero Chicago, IL 60657", 41.736934, -87.740433, "708-617-9690"),
+                new office("Chicago/W 26th", "http://www.allkidsdentalcenter.com/", "3736 W 26th St Chicago, IL 60623", 41.844454, -87.718623, "773-649-0910"),
 		    ];
 
 		    function initMap() {
@@ -139,6 +146,7 @@
 		                    return e1.distance.value - e2.distance.value;
 		                });
 		                updateLocationUi(sorted, location);
+		                google.maps.event.trigger(globalMap, 'resize');
 		            }
 		        });
 		    }
@@ -147,12 +155,13 @@
 		        var listDom = document.getElementById("officeList");
 		        listDom.innerHTML = "";
 		        sortedDestinations.forEach(function (destination) {
-		            var officesDisplay = "<div class='officeDetails'> " +
-                        "<div class='name'><a href='" + destination.office.link + "'>" + destination.office.title + "</a></div>" +
-                        "<div class='address'>" + destination.office.address + "</div>" +
-                        "<div class='phone'><a href='tel:" + destination.office.phone + "'>" + destination.office.phone + "</a></div>" +
-                        "<div class='directions'><a href='https://maps.google.com?saddr=" + location + "&daddr=" + destination.office.address + "' target='_blank'>Directions</a> ("+ destination.distance.text + ")</div>" +
-                        "</div><br/>";
+		            var officesDisplay = "<div class='officeDetails'> "
+                        + "<div class='name'><a href='" + destination.office.link + "'>" + destination.office.title + "</a></div>"
+                        + "<div class='address'>" + destination.office.address + "</div>" 
+                        + "<div class='phone'><a href='tel:" + destination.office.phone + "'>" + destination.office.phone + "</a></div>"
+                        + "<div class='directions'><a href='https://maps.google.com?saddr=" + location + "&daddr=" + destination.office.address + "' target='_blank'>Directions</a></div>"
+		                + "<div class='distAndTime'>" + destination.distance.text + " / " + destination.duration.text+ "</div>"
+                        + "</div><br/>";
 		            listDom.innerHTML += officesDisplay;
 		        }, this);
 
